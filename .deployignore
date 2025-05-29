@@ -1,0 +1,117 @@
+# Azure Deployment Ignore File
+# Files and directories to exclude from deployment
+
+# Environment and credentials
+.env
+.env.local
+.env.production
+.env.development
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+app-logs/
+LogFiles/
+logs/
+
+# Vector databases and embeddings
+chroma_db/
+chromadb/
+vector_db/
+embeddings/
+faiss_index/
+
+# Deployment artifacts
+deployments/
+deploy.zip
+*.zip
+backup/
+
+# Test files
+test_*
+*_test.py
+pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.cache
+
+# Node modules (if any)
+node_modules/
+
+# Data files (often large)
+*.csv
+*.json
+data/
+scraped_data/
+raw_data/
+
+# Model files (can be large)
+models/
+*.pkl
+*.model
+*.bin
+
+# Documentation drafts
+draft_*
+todo.txt
+notes.txt
+
+# Local configuration
+local_settings.py
+config_local.py

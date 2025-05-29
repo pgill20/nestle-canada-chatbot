@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import openai
+from openai import OpenAI
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 # OpenAI API Configuration
 api_key = os.getenv('OPENAI_API_KEY')
 if api_key:
-    openai.api_key = api_key
+    openai_client = OpenAI(api_key=api_key)
     logger.info("OpenAI API key configured successfully")
 else:
+    openai_client = None
     logger.warning("OPENAI_API_KEY not found in environment variables")
 
 # Nestlé website base URL
@@ -160,8 +161,8 @@ class NestleChatbot:
     def generate_response(self, user_message):
         """Generate chatbot response using OpenAI and scraped content"""
         try:
-            # Check if OpenAI API key is available
-            if not openai.api_key:
+            # Check if OpenAI client is available
+            if not openai_client:
                 return "I'm sorry, the AI service is currently unavailable. Please try again later or visit www.madewithnestle.ca for more information."
             
             # Search knowledge base
@@ -194,8 +195,8 @@ class NestleChatbot:
             
             Please provide a helpful response to the user's question. If you reference specific information, mention that it comes from the Made with Nestlé Canada website."""
             
-            # Call OpenAI API (using older v0.28.1 style)
-            response = openai.ChatCompletion.create(
+            # Call OpenAI API (using new v1.0+ style)
+            response = openai_client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": system_prompt},

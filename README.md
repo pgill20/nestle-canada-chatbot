@@ -53,7 +53,7 @@ nestle-chatbot/
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/pgill20/nestle-canada-chatbot.git
    cd nestle-chatbot
    ```
 
@@ -282,7 +282,6 @@ This project is proprietary software developed for Nestlé Canada Inc.
 
 For technical support or questions:
 - Create an issue in the GitHub repository
-- Contact the development team
 - Check Azure Monitor for deployment issues
 
 ---

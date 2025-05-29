@@ -4,13 +4,647 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Made with Nestlé Canada - AI Chatbot</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+            min-height: 100vh;
+        }
+
+        /* Header Section */
+        .header-section {
+            background: linear-gradient(135deg, #8B4513 0%, #6B3410 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .main-subtitle {
+            font-size: 1.3rem;
+            font-weight: 400;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Products Section */
+        .products-section {
+            background: linear-gradient(135deg, #f5f3f0 0%, #e8e1d9 100%);
+            padding: 60px 20px;
+            position: relative;
+            min-height: calc(100vh - 200px);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            color: #8B4513;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .product-card {
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .product-card:hover::before {
+            left: 100%;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.2);
+            border-color: #8B4513;
+            background: white;
+        }
+
+        .product-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover .product-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 25px rgba(139, 69, 19, 0.3);
+        }
+
+        .product-card h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .product-card p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Background Particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(139, 69, 19, 0.1);
+            animation: bgFloat 15s infinite linear;
+        }
+
+        .particle:nth-child(1) { width: 60px; height: 60px; top: 10%; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 40px; height: 40px; top: 70%; right: 20%; animation-delay: 5s; }
+        .particle:nth-child(3) { width: 80px; height: 80px; bottom: 15%; left: 15%; animation-delay: 10s; }
+        .particle:nth-child(4) { width: 50px; height: 50px; top: 50%; right: 10%; animation-delay: 3s; }
+
+        @keyframes bgFloat {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-50px) rotate(180deg); opacity: 0.3; }
+            100% { transform: translateY(0px) rotate(360deg); opacity: 0.1; }
+        }
+
+        /* Chatbot Styles */
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .chatbot-toggle {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 32px rgba(44, 90, 160, 0.4);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .chatbot-toggle:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 40px rgba(44, 90, 160, 0.5);
+        }
+
+        .bot-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .bot-name {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .chatbot-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 380px;
+            height: 500px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .chatbot-window.active {
+            display: flex;
+            animation: slideUpScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideUpScale {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .bot-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bot-avatar {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bot-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bot-details .bot-name {
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .bot-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .minimize-btn, .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .minimize-btn:hover, .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+            animation: messageSlide 0.4s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .bot-message .message-avatar {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+        }
+
+        .user-message .message-avatar {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 1px solid #e0e0e0;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-message .message-content {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            color: white;
+            border: none;
+        }
+
+        .message-content p {
+            margin: 0;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 6px;
+            height: 6px;
+            background: #2c5aa0;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .chat-input-area {
+            background: white;
+            padding: 16px 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #messageInput {
+            flex: 1;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        #messageInput:focus {
+            border-color: #2c5aa0;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+        }
+
+        #messageInput::placeholder {
+            color: #999;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3d72 100%);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(44, 90, 160, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Interactive Effects */
+        .product-card.clicked {
+            animation: cardPulse 0.6s ease-out;
+        }
+
+        @keyframes cardPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .chatbot-container {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+            
+            .chatbot-window {
+                width: 100%;
+                height: 70vh;
+                bottom: 60px;
+                right: 0;
+            }
+            
+            .chatbot-toggle {
+                width: 100%;
+                justify-content: center;
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Background image container -->
-    <div class="background-container">
-        <img src="{{ url_for('static', filename='nestle-website-screenshot.jpg') }}" alt="Made with Nestlé Canada Website" class="background-image">
+    <!-- Background Particles -->
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="header-section">
+        <div class="header-content">
+            <h1 class="main-title">Made with Nestlé</h1>
+            <p class="main-subtitle">Discover delicious recipes and premium ingredients</p>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <div class="products-section">
+        <h2 class="section-title">Premium Nestlé Products</h2>
+        
+        <div class="products-grid">
+            <div class="product-card" data-product="kitkat">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🍫</span>
+                </div>
+                <h3>KitKat Chunky</h3>
+                <p>Premium chocolate wafer bars with various flavors and seasonal varieties.</p>
+            </div>
+
+            <div class="product-card" data-product="quality-street">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🥛</span>
+                </div>
+                <h3>Quality Street</h3>
+                <p>Assorted chocolates and confectionery perfect for gifting and celebrations.</p>
+            </div>
+
+            <div class="product-card" data-product="smarties">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🍪</span>
+                </div>
+                <h3>Smarties</h3>
+                <p>Colorful candy-coated chocolates loved by families worldwide.</p>
+            </div>
+
+            <div class="product-card" data-product="baking">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🧁</span>
+                </div>
+                <h3>Baking Products</h3>
+                <p>Premium baking ingredients and mixes for homemade treats.</p>
+            </div>
+
+            <div class="product-card" data-product="seasonal">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🍯</span>
+                </div>
+                <h3>Seasonal Treats</h3>
+                <p>Special holiday collections and limited edition flavors.</p>
+            </div>
+
+            <div class="product-card" data-product="gifts">
+                <div class="product-icon">
+                    <span style="font-size: 2rem;">🎁</span>
+                </div>
+                <h3>Gift Sets</h3>
+                <p>Curated collections perfect for special occasions and holidays.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Chatbot container -->
@@ -92,6 +726,465 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        class NestleChatbot {
+            constructor() {
+                this.isOpen = false;
+                this.isLoading = false;
+                this.initializeElements();
+                this.attachEventListeners();
+                this.initializeInteractiveElements();
+                this.loadChatHistory();
+            }
+
+            initializeElements() {
+                this.chatbotToggle = document.getElementById('chatbotToggle');
+                this.chatbotWindow = document.getElementById('chatbotWindow');
+                this.minimizeBtn = document.getElementById('minimizeBtn');
+                this.closeBtn = document.getElementById('closeBtn');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+            }
+
+            attachEventListeners() {
+                this.chatbotToggle.addEventListener('click', () => this.toggleChatbot());
+                this.minimizeBtn.addEventListener('click', () => this.minimizeChatbot());
+                this.closeBtn.addEventListener('click', () => this.closeChatbot());
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                this.messageInput.addEventListener('input', () => this.autoResizeInput());
+            }
+
+            initializeInteractiveElements() {
+                const productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        this.handleProductCardClick(e.currentTarget);
+                    });
+                    card.addEventListener('mousedown', (e) => {
+                        this.createRipple(e, card);
+                    });
+                });
+
+                this.initializeParticleSystem();
+                this.initializeScrollEffects();
+            }
+
+            handleProductCardClick(card) {
+                card.classList.add('clicked');
+                setTimeout(() => card.classList.remove('clicked'), 600);
+
+                const productType = card.dataset.product;
+                const productName = card.querySelector('h3').textContent;
+                
+                if (!this.isOpen) {
+                    this.openChatbot();
+                }
+                
+                setTimeout(async () => {
+                    const message = `Tell me more about ${productName}`;
+                    this.addMessage(message, 'user');
+                    this.showLoading();
+                    
+                    try {
+                        const response = await fetch('/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ message: message })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        
+                        this.hideLoading();
+                        this.addMessage(data.response || "I'd be happy to help you learn more about our Nestlé products!", 'bot');
+                        
+                    } catch (error) {
+                        console.error('Error getting product info:', error);
+                        this.hideLoading();
+                        this.addMessage(
+                            "I'd be happy to help you learn more about our Nestlé products! What specific information are you looking for?",
+                            'bot'
+                        );
+                    }
+                }, 500);
+            }
+
+            createRipple(event, element) {
+                const ripple = document.createElement('span');
+                const rect = element.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = event.clientX - rect.left - size / 2;
+                const y = event.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(139, 69, 19, 0.3);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                    pointer-events: none;
+                `;
+                
+                element.style.position = 'relative';
+                element.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            }
+
+            initializeParticleSystem() {
+                const particlesContainer = document.querySelector('.bg-particles');
+                
+                for (let i = 4; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.cssText = `
+                        position: absolute;
+                        border-radius: 50%;
+                        background: rgba(139, 69, 19, ${0.05 + Math.random() * 0.1});
+                        width: ${20 + Math.random() * 60}px;
+                        height: ${20 + Math.random() * 60}px;
+                        top: ${Math.random() * 100}%;
+                        left: ${Math.random() * 100}%;
+                        animation: bgFloat ${10 + Math.random() * 10}s infinite linear;
+                        animation-delay: ${Math.random() * 5}s;
+                    `;
+                    particlesContainer.appendChild(particle);
+                }
+
+                document.addEventListener('mousemove', (e) => {
+                    const particles = document.querySelectorAll('.particle');
+                    particles.forEach(particle => {
+                        const rect = particle.getBoundingClientRect();
+                        const centerX = rect.left + rect.width / 2;
+                        const centerY = rect.top + rect.height / 2;
+                        const distance = Math.sqrt(Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2));
+                        
+                        if (distance < 100) {
+                            const force = (100 - distance) / 100;
+                            particle.style.transform = `scale(${1 + force * 0.5}) translate(${(e.clientX - centerX) * force * 0.1}px, ${(e.clientY - centerY) * force * 0.1}px)`;
+                        } else {
+                            particle.style.transform = '';
+                        }
+                    });
+                });
+            }
+
+            initializeScrollEffects() {
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0)';
+                        }
+                    });
+                }, observerOptions);
+
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(30px)';
+                    card.style.transition = 'all 0.6s ease';
+                    observer.observe(card);
+                });
+            }
+
+            toggleChatbot() {
+                if (this.isOpen) {
+                    this.closeChatbot();
+                } else {
+                    this.openChatbot();
+                }
+            }
+
+            openChatbot() {
+                this.chatbotWindow.classList.add('active');
+                this.isOpen = true;
+                this.messageInput.focus();
+                this.scrollToBottom();
+                this.trackEvent('chatbot_opened');
+            }
+
+            closeChatbot() {
+                this.chatbotWindow.classList.remove('active');
+                this.isOpen = false;
+                this.trackEvent('chatbot_closed');
+            }
+
+            minimizeChatbot() {
+                this.closeChatbot();
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isLoading) return;
+
+                this.addMessage(message, 'user');
+                this.messageInput.value = '';
+                this.autoResizeInput();
+                this.showLoading();
+
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    this.hideLoading();
+                    this.addMessage(data.response || "I'm sorry, I didn't receive a proper response. Please try again.", 'bot');
+                    
+                    this.saveChatHistory();
+                    this.trackEvent('message_sent', { message_length: message.length });
+
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.hideLoading();
+                    this.addMessage(
+                        "I'm sorry, I'm having trouble connecting right now. Please try again later or visit www.madewithnestle.ca for more information.",
+                        'bot'
+                    );
+                }
+            }
+
+            addMessage(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'message-avatar';
+                
+                if (sender === 'bot') {
+                    avatarDiv.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.92 12.25L17.58 6.59L20.25 9.26L21 9ZM1 9L2.26 9.26L4.93 6.59L10.59 12.25L12 10.84L6.34 5.17L9 2.5L7.5 1L1 7V9ZM12 13.5C7.03 13.5 3 17.53 3 22.5H21C21 17.53 16.97 13.5 12 13.5Z" fill="currentColor"/>
+                        </svg>
+                    `;
+                } else {
+                    avatarDiv.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+                        </svg>
+                    `;
+                }
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = `<p>${this.processMessageContent(content)}</p>`;
+
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            processMessageContent(content) {
+                return content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            }
+
+            showLoading() {
+                this.isLoading = true;
+                this.loadingIndicator.style.display = 'flex';
+                this.sendButton.disabled = true;
+                this.scrollToBottom();
+            }
+
+            hideLoading() {
+                this.isLoading = false;
+                this.loadingIndicator.style.display = 'none';
+                this.sendButton.disabled = false;
+            }
+
+            autoResizeInput() {
+                const input = this.messageInput;
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            }
+
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            saveChatHistory() {
+                try {
+                    const messages = Array.from(this.chatMessages.children)
+                        .filter(msg => msg.classList.contains('message'))
+                        .map(msg => ({
+                            content: msg.querySelector('.message-content p').textContent,
+                            sender: msg.classList.contains('user-message') ? 'user' : 'bot',
+                            timestamp: Date.now()
+                        }));
+                    
+                    localStorage.setItem('nestle_chat_history', JSON.stringify(messages.slice(-20)));
+                } catch (error) {
+                    console.warn('Could not save chat history:', error);
+                }
+            }
+
+            loadChatHistory() {
+                try {
+                    const history = localStorage.getItem('nestle_chat_history');
+                    if (history) {
+                        const messages = JSON.parse(history);
+                        const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+                        const recentMessages = messages.filter(msg => msg.timestamp > dayAgo);
+                        
+                        const welcomeMessage = this.chatMessages.querySelector('.message');
+                        this.chatMessages.innerHTML = '';
+                        if (welcomeMessage) {
+                            this.chatMessages.appendChild(welcomeMessage);
+                        }
+                        
+                        recentMessages.forEach(msg => {
+                            if (msg.content && msg.sender) {
+                                this.addMessageFromHistory(msg.content, msg.sender);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Could not load chat history:', error);
+                }
+            }
+
+            addMessageFromHistory(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'message-avatar';
+                
+                if (sender === 'bot') {
+                    avatarDiv.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L11.92 12.25L17.58 6.59L20.25 9.26L21 9ZM1 9L2.26 9.26L4.93 6.59L10.59 12.25L12 10.84L6.34 5.17L9 2.5L7.5 1L1 7V9ZM12 13.5C7.03 13.5 3 17.53 3 22.5H21C21 17.53 16.97 13.5 12 13.5Z" fill="currentColor"/>
+                        </svg>
+                    `;
+                } else {
+                    avatarDiv.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+                        </svg>
+                    `;
+                }
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = `<p>${content}</p>`;
+
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+
+                this.chatMessages.appendChild(messageDiv);
+            }
+
+            trackEvent(eventName, data = {}) {
+                try {
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', eventName, data);
+                    }
+                    console.log('Event tracked:', eventName, data);
+                } catch (error) {
+                    console.warn('Analytics tracking failed:', error);
+                }
+            }
+
+            async refreshKnowledge() {
+                try {
+                    const response = await fetch('/refresh-knowledge', { method: 'POST' });
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('Error refreshing knowledge:', error);
+                    return { error: 'Failed to refresh knowledge' };
+                }
+            }
+
+            clearChatHistory() {
+                try {
+                    localStorage.removeItem('nestle_chat_history');
+                    const welcomeMessage = this.chatMessages.querySelector('.message');
+                    this.chatMessages.innerHTML = '';
+                    if (welcomeMessage) {
+                        this.chatMessages.appendChild(welcomeMessage);
+                    }
+                } catch (error) {
+                    console.warn('Could not clear chat history:', error);
+                }
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            window.nestleChatbot = new NestleChatbot();
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.altKey && e.key === 'c') {
+                    e.preventDefault();
+                    window.nestleChatbot.toggleChatbot();
+                }
+                
+                if (e.key === 'Escape' && window.nestleChatbot.isOpen) {
+                    window.nestleChatbot.closeChatbot();
+                }
+            });
+
+            // Additional interactive effects
+            const handlePageInteractions = () => {
+                window.addEventListener('scroll', () => {
+                    const scrolled = window.pageYOffset;
+                    const header = document.querySelector('.header-section');
+                    if (header) {
+                        header.style.transform = `translateY(${scrolled * 0.5}px)`;
+                    }
+                });
+
+                document.querySelectorAll('.product-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => {
+                        card.style.filter = 'brightness(1.05)';
+                    });
+                    
+                    card.addEventListener('mouseleave', () => {
+                        card.style.filter = '';
+                    });
+                });
+            };
+
+            handlePageInteractions();
+        });
+    </script>
 </body>
 </html>

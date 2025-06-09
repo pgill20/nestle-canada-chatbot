@@ -1,9 +1,14 @@
-class NestleChatbot {
+class EnhancedNestleChatbot {
     constructor() {
         this.isOpen = false;
         this.isLoading = false;
+        this.locationService = null;
+        this.locationUI = null;
+        
         this.initializeElements();
+        this.initializeLocationServices();
         this.attachEventListeners();
+        this.initializeInteractiveElements();
         this.loadChatHistory();
     }
 
@@ -18,15 +23,24 @@ class NestleChatbot {
         this.loadingIndicator = document.getElementById('loadingIndicator');
     }
 
+    async initializeLocationServices() {
+        try {
+            // Initialize location service
+            this.locationService = new LocationService();
+            
+            // Initialize location UI
+            this.locationUI = new LocationUI(this, this.locationService);
+            
+            console.log('Location services initialized successfully');
+        } catch (error) {
+            console.error('Error initializing location services:', error);
+        }
+    }
+
     attachEventListeners() {
-        // Toggle chatbot
         this.chatbotToggle.addEventListener('click', () => this.toggleChatbot());
-        
-        // Minimize and close buttons
         this.minimizeBtn.addEventListener('click', () => this.minimizeChatbot());
         this.closeBtn.addEventListener('click', () => this.closeChatbot());
-        
-        // Send message
         this.sendButton.addEventListener('click', () => this.sendMessage());
         this.messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -34,18 +48,164 @@ class NestleChatbot {
                 this.sendMessage();
             }
         });
-
-        // Auto-resize input
         this.messageInput.addEventListener('input', () => this.autoResizeInput());
+    }
+
+    initializeInteractiveElements() {
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                this.handleProductCardClick(e.currentTarget);
+            });
+            card.addEventListener('mousedown', (e) => {
+                this.createRipple(e, card);
+            });
+        });
+
+        this.initializeParticleSystem();
+        this.initializeScrollEffects();
+    }
+
+    handleProductCardClick(card) {
+        card.classList.add('clicked');
+        setTimeout(() => card.classList.remove('clicked'), 600);
+
+        const productType = card.dataset.product;
+        const productName = card.querySelector('h3').textContent;
         
-        // Click outside to close
-        document.addEventListener('click', (e) => {
-            if (!this.chatbotToggle.contains(e.target) && 
-                !this.chatbotWindow.contains(e.target) && 
-                this.isOpen) {
-                // Optional: uncomment to close on outside click
-                // this.closeChatbot();
+        if (!this.isOpen) {
+            this.openChatbot();
+        }
+        
+        setTimeout(async () => {
+            let message;
+            
+            // Check if location is enabled for location-based queries
+            if (this.locationService && this.locationService.isLocationEnabled()) {
+                message = `Where can I buy ${productName} near me?`;
+            } else {
+                message = `Tell me more about ${productName} and where I can buy it`;
             }
+            
+            this.addMessage(message, 'user');
+            this.showLoading();
+            
+            try {
+                const requestData = { message: message };
+                
+                // Include location data if available
+                if (this.locationService && this.locationService.isLocationEnabled()) {
+                    requestData.location = this.locationService.getUserLocation();
+                }
+                
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                this.hideLoading();
+                
+                // Handle location-based responses
+                if (data.query_type === 'location' && this.locationUI) {
+                    const locationResponse = await this.locationUI.handleLocationQuery(message, productType);
+                    if (locationResponse) {
+                        this.addMessage(locationResponse, 'bot');
+                    } else {
+                        this.addMessage(data.response || "I'd be happy to help you learn more about our Nestlé products!", 'bot');
+                    }
+                } else {
+                    this.addMessage(data.response || "I'd be happy to help you learn more about our Nestlé products!", 'bot');
+                }
+                
+            } catch (error) {
+                console.error('Error getting product info:', error);
+                this.hideLoading();
+                this.addMessage(
+                    "I'd be happy to help you learn more about our Nestlé products! What specific information are you looking for?",
+                    'bot'
+                );
+            }
+        }, 500);
+    }
+
+    createRipple(event, element) {
+        const ripple = document.createElement('span');
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        ripple.style.cssText = `
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(139, 69, 19, 0.3);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            pointer-events: none;
+        `;
+        
+        element.style.position = 'relative';
+        element.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+
+    initializeParticleSystem() {
+        const particlesContainer = document.querySelector('.bg-particles');
+        
+        for (let i = 4; i < 12; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(139, 69, 19, ${0.05 + Math.random() * 0.1});
+                width: ${20 + Math.random() * 60}px;
+                height: ${20 + Math.random() * 60}px;
+                top: ${Math.random() * 100}%;
+                left: ${Math.random() * 100}%;
+                animation: bgFloat ${10 + Math.random() * 10}s infinite linear;
+                animation-delay: ${Math.random() * 5}s;
+            `;
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    initializeScrollEffects() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
         });
     }
 
@@ -62,16 +222,12 @@ class NestleChatbot {
         this.isOpen = true;
         this.messageInput.focus();
         this.scrollToBottom();
-        
-        // Analytics event (optional)
         this.trackEvent('chatbot_opened');
     }
 
     closeChatbot() {
         this.chatbotWindow.classList.remove('active');
         this.isOpen = false;
-        
-        // Analytics event (optional)
         this.trackEvent('chatbot_closed');
     }
 
@@ -83,22 +239,26 @@ class NestleChatbot {
         const message = this.messageInput.value.trim();
         if (!message || this.isLoading) return;
 
-        // Add user message to chat
         this.addMessage(message, 'user');
         this.messageInput.value = '';
         this.autoResizeInput();
-
-        // Show loading indicator
         this.showLoading();
 
         try {
-            // Send message to backend
+            const requestData = { message: message };
+            
+            // Include location data if available and relevant
+            if (this.locationService && this.locationService.isLocationEnabled() && 
+                this.locationUI && this.locationUI.isLocationQuery(message)) {
+                requestData.location = this.locationService.getUserLocation();
+            }
+
             const response = await fetch('/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ message: message })
+                body: JSON.stringify(requestData)
             });
 
             if (!response.ok) {
@@ -107,15 +267,23 @@ class NestleChatbot {
 
             const data = await response.json();
             
-            // Hide loading and add bot response
             this.hideLoading();
-            this.addMessage(data.response, 'bot');
             
-            // Save to chat history
+            // Handle different response types
+            if (data.query_type === 'location' && this.locationUI) {
+                const productName = this.locationUI.extractProductFromQuery(message);
+                const locationResponse = await this.locationUI.handleLocationQuery(message, productName);
+                if (locationResponse) {
+                    this.addMessage(locationResponse, 'bot');
+                } else {
+                    this.addMessage(data.response || "I'm sorry, I didn't receive a proper response. Please try again.", 'bot');
+                }
+            } else {
+                this.addMessage(data.response || "I'm sorry, I didn't receive a proper response. Please try again.", 'bot');
+            }
+            
             this.saveChatHistory();
-            
-            // Analytics event
-            this.trackEvent('message_sent', { message_length: message.length });
+            this.trackEvent('message_sent', { message_length: message.length, query_type: data.query_type });
 
         } catch (error) {
             console.error('Error sending message:', error);
@@ -150,10 +318,7 @@ class NestleChatbot {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        
-        // Process content to handle links and formatting
-        const processedContent = this.processMessageContent(content);
-        contentDiv.innerHTML = processedContent;
+        contentDiv.innerHTML = `<p>${this.processMessageContent(content)}</p>`;
 
         messageDiv.appendChild(avatarDiv);
         messageDiv.appendChild(contentDiv);
@@ -163,18 +328,7 @@ class NestleChatbot {
     }
 
     processMessageContent(content) {
-        // Convert markdown-style links to HTML
-        let processed = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-        
-        // Convert newlines to <br> tags
-        processed = processed.replace(/\n/g, '<br>');
-        
-        // Wrap in paragraph tags if not already HTML
-        if (!processed.includes('<')) {
-            processed = `<p>${processed}</p>`;
-        }
-        
-        return processed;
+        return content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     }
 
     showLoading() {
@@ -207,12 +361,12 @@ class NestleChatbot {
             const messages = Array.from(this.chatMessages.children)
                 .filter(msg => msg.classList.contains('message'))
                 .map(msg => ({
-                    content: msg.querySelector('.message-content').innerHTML,
+                    content: msg.querySelector('.message-content p').textContent,
                     sender: msg.classList.contains('user-message') ? 'user' : 'bot',
                     timestamp: Date.now()
                 }));
             
-            localStorage.setItem('nestle_chat_history', JSON.stringify(messages.slice(-20))); // Keep last 20 messages
+            localStorage.setItem('nestle_chat_history', JSON.stringify(messages.slice(-20)));
         } catch (error) {
             console.warn('Could not save chat history:', error);
         }
@@ -223,18 +377,15 @@ class NestleChatbot {
             const history = localStorage.getItem('nestle_chat_history');
             if (history) {
                 const messages = JSON.parse(history);
-                // Only load recent messages (last 24 hours)
                 const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
                 const recentMessages = messages.filter(msg => msg.timestamp > dayAgo);
                 
-                // Clear existing messages except welcome message
                 const welcomeMessage = this.chatMessages.querySelector('.message');
                 this.chatMessages.innerHTML = '';
                 if (welcomeMessage) {
                     this.chatMessages.appendChild(welcomeMessage);
                 }
                 
-                // Add historical messages
                 recentMessages.forEach(msg => {
                     if (msg.content && msg.sender) {
                         this.addMessageFromHistory(msg.content, msg.sender);
@@ -269,7 +420,7 @@ class NestleChatbot {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.innerHTML = content;
+        contentDiv.innerHTML = `<p>${content}</p>`;
 
         messageDiv.appendChild(avatarDiv);
         messageDiv.appendChild(contentDiv);
@@ -278,7 +429,6 @@ class NestleChatbot {
     }
 
     trackEvent(eventName, data = {}) {
-        // Analytics tracking - replace with your preferred analytics service
         try {
             if (typeof gtag !== 'undefined') {
                 gtag('event', eventName, data);
@@ -289,17 +439,20 @@ class NestleChatbot {
         }
     }
 
-    // Public methods for external access
-    refreshKnowledge() {
-        return fetch('/refresh-knowledge', { method: 'POST' })
-            .then(response => response.json())
-            .catch(error => console.error('Error refreshing knowledge:', error));
+    async refreshKnowledge() {
+        try {
+            const response = await fetch('/refresh-knowledge', { method: 'POST' });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error refreshing knowledge:', error);
+            return { error: 'Failed to refresh knowledge' };
+        }
     }
 
     clearChatHistory() {
         try {
             localStorage.removeItem('nestle_chat_history');
-            // Keep only the welcome message
             const welcomeMessage = this.chatMessages.querySelector('.message');
             this.chatMessages.innerHTML = '';
             if (welcomeMessage) {
@@ -309,11 +462,20 @@ class NestleChatbot {
             console.warn('Could not clear chat history:', error);
         }
     }
+
+    // Public API for location services
+    getLocationService() {
+        return this.locationService;
+    }
+
+    getLocationUI() {
+        return this.locationUI;
+    }
 }
 
 // Initialize chatbot when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    window.nestleChatbot = new NestleChatbot();
+    window.nestleChatbot = new EnhancedNestleChatbot();
     
     // Optional: Add keyboard shortcuts
     document.addEventListener('keydown', function(e) {
